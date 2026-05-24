@@ -1,0 +1,33 @@
+:root {
+  --bg: #0b1110;
+  --fg: #b7ffd6;
+  --line: #214236;
+  --accent: #33ff99;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font: 13px "SF Mono", Menlo, monospace;
+  width: 280px;
+}
+
+.wrap { padding: 12px; border: 1px solid var(--line); }
+.domain {
+  margin-bottom: 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--accent);
+}
+
+select {
+  width: 100%;
+  background: #0f1816;
+  color: var(--fg);
+  border: 1px solid var(--line);
+  padding: 8px;
+}
+
+.mute { display: block; margin-top: 10px; }
