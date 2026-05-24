@@ -99,9 +99,12 @@ function pickMoodFromDomain(domain) {
   return hit ? hit[1] : "";
 }
 
-function chooseMood(domain, rawText) {
+function chooseMood(domain, rawText, signals = {}) {
   const contentMood = pickMoodFromKeywords(rawText);
   const domainMood = pickMoodFromDomain(domain);
+  if (signals.hasCode && domainMood !== "Thriller") return "Cyberpunk";
+  if ((signals.articleCount || 0) > 2 && (signals.linkCount || 0) > 80) return "Library";
+  if (signals.hasVideo && (signals.linkCount || 0) > 100) return "Arcade";
   if (!domainMood) return contentMood;
   if (domainMood === contentMood) return contentMood;
 
@@ -117,7 +120,7 @@ chrome.runtime.onMessage.addListener((msg, sender) => {
     const url = sender?.tab?.url || "";
     const domain = safeDomain(url);
     const hintMood = msg.mood && TRACKS.includes(msg.mood) ? msg.mood : "";
-    const mood = chooseMood(domain, `${msg.rawText || ""} ${hintMood}`);
+    const mood = chooseMood(domain, `${msg.rawText || ""} ${hintMood}`, msg.signals || {});
     routeDomainMood(domain, mood);
   }
 });
