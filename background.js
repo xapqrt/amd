@@ -358,11 +358,24 @@ const STARTERS = {
 
 function switchTrack(nextTrack) {
   if (!TRACKS.includes(nextTrack)) return;
+  if (transition_lock) return;
+  transition_lock = true;
   bootAudio();
-  if (active_track === nextTrack) return;
-  killCurrentTrack();
+  if (active_track === nextTrack) {
+    transition_lock = false;
+    return;
+  }
+  softKillCurrentTrack(120);
   const fn = STARTERS[nextTrack];
-  if (fn) fn();
+  setTimeout(() => {
+    if (fn) fn();
+    if (master_gain && audio_ctx) {
+      const now = audio_ctx.currentTime;
+      master_gain.gain.setValueAtTime(0.0001, now);
+      master_gain.gain.linearRampToValueAtTime(0.22, now + 0.18);
+    }
+    transition_lock = false;
+  }, 130);
 }
 
 chrome.runtime.onMessage.addListener(async (msg) => {
