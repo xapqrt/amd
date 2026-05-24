@@ -10,6 +10,7 @@ let active_track = null;
 let active_domain_string = "";
 let mute_list = [];
 let domain_track_map = {};
+let transition_lock = false;
 
 function bootAudio() {
   if (!audio_ctx || audio_ctx.state === "closed") {
@@ -29,6 +30,22 @@ function killCurrentTrack() {
   }
   active_nodes = [];
   active_track = null;
+}
+
+function softKillCurrentTrack(ms = 140) {
+  if (!audio_ctx || !master_gain) {
+    killCurrentTrack();
+    return;
+  }
+  const now = audio_ctx.currentTime;
+  const cur = master_gain.gain.value;
+  master_gain.gain.cancelScheduledValues(now);
+  master_gain.gain.setValueAtTime(cur, now);
+  master_gain.gain.linearRampToValueAtTime(0.0001, now + ms / 1000);
+  setTimeout(() => {
+    killCurrentTrack();
+    master_gain.gain.value = 0.22;
+  }, ms + 20);
 }
 
 const MOOD_KEYWORDS = {
