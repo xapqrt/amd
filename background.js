@@ -126,6 +126,26 @@ async function initEngine() {
 
 initEngine();
 
+async function recheckActiveTabMood() {
+  const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+  const tab = tabs?.[0];
+  if (!tab?.url) return;
+  const domain = safeDomain(tab.url);
+  const guessText = `${tab.title || ""} ${domain}`;
+  const guessedMood = pickMoodFromKeywords(guessText);
+  routeDomainMood(domain, guessedMood);
+}
+
+chrome.tabs.onActivated.addListener(() => {
+  recheckActiveTabMood().catch(() => {});
+});
+
+chrome.tabs.onUpdated.addListener((tabId, info, tab) => {
+  if (info.status !== "complete") return;
+  if (!tab?.active) return;
+  recheckActiveTabMood().catch(() => {});
+});
+
 function mkOsc(type, freq, gainVal, detune = 0) {
   const o = audio_ctx.createOscillator();
   const g = audio_ctx.createGain();
