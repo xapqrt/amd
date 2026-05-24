@@ -170,6 +170,7 @@ function routeDomainMood(domain, detectedMood) {
 async function initEngine() {
   await loadVault();
   bootAudio();
+  chrome.alarms.create("ws-health", { periodInMinutes: 1 });
 }
 
 initEngine();
@@ -192,6 +193,18 @@ chrome.tabs.onUpdated.addListener((tabId, info, tab) => {
   if (info.status !== "complete") return;
   if (!tab?.active) return;
   recheckActiveTabMood().catch(() => {});
+});
+
+chrome.alarms.onAlarm.addListener((alarm) => {
+  if (alarm.name !== "ws-health") return;
+  if (!audio_ctx) {
+    bootAudio();
+    return;
+  }
+  if (audio_ctx.state === "closed") {
+    console.log("AUDIO CONTEXT DIED REBOOTING");
+    bootAudio();
+  }
 });
 
 chrome.commands.onCommand.addListener(async (command) => {

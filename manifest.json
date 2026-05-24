@@ -3,7 +3,7 @@
   "name": "Web-Scapes",
   "version": "0.0.1",
   "description": "Dynamic procedural ambient soundtracks per webpage mood.",
-  "permissions": ["storage", "tabs", "activeTab"],
+  "permissions": ["storage", "tabs", "activeTab", "alarms"],
   "host_permissions": ["<all_urls>"],
   "background": {
     "service_worker": "background.js",
