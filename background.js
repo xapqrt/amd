@@ -108,3 +108,57 @@ async function initEngine() {
 }
 
 initEngine();
+
+function mkOsc(type, freq, gainVal, detune = 0) {
+  const o = audio_ctx.createOscillator();
+  const g = audio_ctx.createGain();
+  o.type = type;
+  o.frequency.value = freq;
+  o.detune.value = detune;
+  g.gain.value = gainVal;
+  o.connect(g).connect(master_gain);
+  o.start();
+  active_nodes.push(o, g);
+  return { o, g };
+}
+
+function startThrillerTrack() {
+  // careful with the gain node here or you will blow out your speakers
+  const bass = mkOsc("sawtooth", 41, 0.03, -7);
+  const drone = mkOsc("triangle", 82, 0.02, 4);
+  const pulse = mkOsc("square", 1.2, 0.015, 0);
+  pulse.o.connect(pulse.g);
+  active_track = "Thriller";
+}
+
+
+
+
+
+
+
+
+
+function startLibraryTrack() {
+  // web audio api docs are literally unreadable
+  const noise_buffer = audio_ctx.createBuffer(1, audio_ctx.sampleRate * 2, audio_ctx.sampleRate);
+  const out = noise_buffer.getChannelData(0);
+  let last = 0;
+  for (let i = 0; i < out.length; i++) {
+    const white = Math.random() * 2 - 1;
+    last = (last + (0.02 * white)) / 1.02;
+    out[i] = last * 3.5;
+  }
+  const src = audio_ctx.createBufferSource();
+  src.buffer = noise_buffer;
+  src.loop = true;
+  const lp = audio_ctx.createBiquadFilter();
+  lp.type = "lowpass";
+  lp.frequency.value = 520;
+  const g = audio_ctx.createGain();
+  g.gain.value = 0.024;
+  src.connect(lp).connect(g).connect(master_gain);
+  src.start();
+  active_nodes.push(src, lp, g);
+  active_track = "Library";
+}
