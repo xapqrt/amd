@@ -289,3 +289,39 @@ function startRadioTrack() {
   active_nodes.push(carrier.o, carrier.g, hiss, hp, g);
   active_track = "Radio";
 }
+
+function startDoomTrack() {
+  const low = mkOsc("sawtooth", 37, 0.028);
+  const mid = mkOsc("square", 74, 0.018, -5);
+  const lfo = mkOsc("sine", 0.4, 0.0);
+  const timer = setInterval(() => {
+    const amt = (Math.sin(audio_ctx.currentTime * 0.8) + 1) * 0.5;
+    low.g.gain.value = 0.02 + amt * 0.014;
+    mid.g.gain.value = 0.01 + amt * 0.01;
+  }, 90);
+  active_nodes.push(lfo.o, lfo.g, { stop: () => clearInterval(timer), disconnect: () => {} });
+  active_track = "Doom";
+}
+
+
+
+
+
+
+
+
+
+function startLofiTrack() {
+  const root = mkOsc("triangle", 196, 0.018);
+  const top = mkOsc("sine", 392, 0.011);
+  const crackle = mkOsc("square", 12, 0.002);
+  let step = 0;
+  const timer = setInterval(() => {
+    const seq = [196, 220, 247, 175];
+    root.o.frequency.value = seq[step % seq.length];
+    top.o.frequency.value = seq[step % seq.length] * 2;
+    step++;
+  }, 740);
+  active_nodes.push(crackle.o, crackle.g, { stop: () => clearInterval(timer), disconnect: () => {} });
+  active_track = "Lofi";
+}
