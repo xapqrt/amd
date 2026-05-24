@@ -490,4 +490,30 @@ chrome.runtime.onMessage.addListener(async (msg) => {
     if (master_gain) master_gain.gain.value = master_volume;
     await saveVault();
   }
+  if (msg?.type === "OPTIONS_GET_ALL") {
+    const keys = new Set([...Object.keys(domain_track_map), ...mute_list]);
+    const rows = [...keys].sort().map((domain) => ({
+      domain,
+      track: domain_track_map[domain] || "",
+      muted: mute_list.includes(domain)
+    }));
+    return Promise.resolve({ rows });
+  }
+  if (msg?.type === "OPTIONS_SAVE_DOMAIN") {
+    const domain = (msg.domain || "").toLowerCase();
+    if (!domain) return;
+    if (msg.track) domain_track_map[domain] = msg.track;
+    if (!msg.track) delete domain_track_map[domain];
+    if (msg.muted && !mute_list.includes(domain)) mute_list.push(domain);
+    if (!msg.muted) mute_list = mute_list.filter((d) => d !== domain);
+    await saveVault();
+    if (domain === active_domain_string) routeDomainMood(domain, active_track || "Lofi");
+  }
+  if (msg?.type === "OPTIONS_REMOVE_DOMAIN") {
+    const domain = (msg.domain || "").toLowerCase();
+    delete domain_track_map[domain];
+    mute_list = mute_list.filter((d) => d !== domain);
+    await saveVault();
+    if (domain === active_domain_string) recheckActiveTabMood().catch(() => {});
+  }
 });
