@@ -43,6 +43,10 @@
     });
   });
 
+  document.getElementById("openSettings").addEventListener("click", () => {
+    chrome.runtime.openOptionsPage();
+  });
+
   vol.addEventListener("input", () => {
     const v = Math.max(0, Math.min(100, Number(vol.value))) / 100;
     chrome.runtime.sendMessage({ type: "POPUP_SET_VOLUME", volume: v });

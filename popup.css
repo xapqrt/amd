@@ -49,4 +49,13 @@ select {
   margin-top: 6px;
 }
 
+.settingsBtn {
+  width: 100%;
+  margin-top: 10px;
+  background: #0e1d17;
+  color: #b8ffd7;
+  border: 1px solid #2f684b;
+  padding: 8px;
+}
+
 .mute { display: block; margin-top: 10px; }
