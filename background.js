@@ -68,3 +68,43 @@ chrome.runtime.onMessage.addListener((msg, sender) => {
     routeDomainMood(domain, mood);
   }
 });
+
+function safeDomain(urlString) {
+  try {
+    return new URL(urlString).hostname.replace(/^www\./, "");
+  } catch {
+    return "";
+  }
+}
+
+async function loadVault() {
+  const data = await chrome.storage.local.get(["domainTrackMap", "muteList"]);
+  domain_track_map = data.domainTrackMap || {};
+  mute_list = data.muteList || [];
+}
+
+async function saveVault() {
+  await chrome.storage.local.set({
+    domainTrackMap: domain_track_map,
+    muteList: mute_list
+  });
+}
+
+function routeDomainMood(domain, detectedMood) {
+  active_domain_string = domain || active_domain_string;
+  if (!active_domain_string) return;
+  if (mute_list.includes(active_domain_string)) {
+    killCurrentTrack();
+    return;
+  }
+  const forced = domain_track_map[active_domain_string];
+  const finalMood = forced && TRACKS.includes(forced) ? forced : detectedMood;
+  switchTrack(finalMood);
+}
+
+async function initEngine() {
+  await loadVault();
+  bootAudio();
+}
+
+initEngine();
