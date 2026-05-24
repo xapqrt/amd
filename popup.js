@@ -6,6 +6,7 @@
   const state = await chrome.runtime.sendMessage({ type: "POPUP_QUERY_STATE", domain });
   const sel = document.getElementById("track");
   const status = document.getElementById("status");
+  const vol = document.getElementById("vol");
 
   const autoOpt = document.createElement("option");
   autoOpt.value = "";
@@ -21,6 +22,7 @@
 
   sel.value = state.forcedTrack || "";
   status.textContent = state.forcedTrack ? `manual track: ${state.forcedTrack}` : "auto mood mode";
+  vol.value = String(Math.round((state.volume ?? 0.22) * 100));
   document.getElementById("mute").checked = state.muted;
 
   sel.addEventListener("change", () => {
@@ -39,5 +41,11 @@
       domain,
       muted: e.target.checked
     });
+  });
+
+  vol.addEventListener("input", () => {
+    const v = Math.max(0, Math.min(100, Number(vol.value))) / 100;
+    chrome.runtime.sendMessage({ type: "POPUP_SET_VOLUME", volume: v });
+    status.textContent = `volume ${Math.round(v * 100)}%`;
   });
 })();

@@ -37,4 +37,16 @@ select {
   padding: 8px;
 }
 
+.volLabel {
+  display: block;
+  margin-top: 10px;
+  font-size: 11px;
+  color: #8ddfb8;
+}
+
+#vol {
+  width: 100%;
+  margin-top: 6px;
+}
+
 .mute { display: block; margin-top: 10px; }
