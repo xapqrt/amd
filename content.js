@@ -31,15 +31,29 @@
     return bestMood;
   }
 
-  const meta = [...document.querySelectorAll("meta[name],meta[property]")]
-    .map((m) => `${m.getAttribute("name") || m.getAttribute("property")}: ${m.content || ""}`)
-    .join(" ");
-  const pathHints = `${location.hostname} ${location.pathname}`;
-  const raw = `${document.title}\n${meta}\n${pathHints}\n${document.body?.innerText || ""}`.slice(0, 18000);
+  function buildRawText() {
+    const meta = [...document.querySelectorAll("meta[name],meta[property]")]
+      .map((m) => `${m.getAttribute("name") || m.getAttribute("property")}: ${m.content || ""}`)
+      .join(" ");
+    const pathHints = `${location.hostname} ${location.pathname}`;
+    return `${document.title}\n${meta}\n${pathHints}\n${document.body?.innerText || ""}`.slice(0, 18000);
+  }
 
-  chrome.runtime.sendMessage({
-    type: "MOOD_DETECTED",
-    mood: detectMood(raw),
-    rawText: raw
+  function pushMood() {
+    const raw = buildRawText();
+    chrome.runtime.sendMessage({
+      type: "MOOD_DETECTED",
+      mood: detectMood(raw),
+      rawText: raw
+    });
+  }
+
+  pushMood();
+
+  let debounce_timer = null;
+  const obs = new MutationObserver(() => {
+    clearTimeout(debounce_timer);
+    debounce_timer = setTimeout(pushMood, 800);
   });
+  obs.observe(document.documentElement || document.body, { childList: true, subtree: true });
 })();
