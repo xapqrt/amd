@@ -325,3 +325,49 @@ function startLofiTrack() {
   active_nodes.push(crackle.o, crackle.g, { stop: () => clearInterval(timer), disconnect: () => {} });
   active_track = "Lofi";
 }
+
+const STARTERS = {
+  Thriller: startThrillerTrack,
+  Library: startLibraryTrack,
+  Arcade: startArcadeTrack,
+  Zen: startZenTrack,
+  Cyberpunk: startCyberpunkTrack,
+  Nature: startNatureTrack,
+  Space: startSpaceTrack,
+  Radio: startRadioTrack,
+  Doom: startDoomTrack,
+  Lofi: startLofiTrack
+};
+
+function switchTrack(nextTrack) {
+  if (!TRACKS.includes(nextTrack)) return;
+  bootAudio();
+  if (active_track === nextTrack) return;
+  killCurrentTrack();
+  const fn = STARTERS[nextTrack];
+  if (fn) fn();
+}
+
+chrome.runtime.onMessage.addListener(async (msg) => {
+  if (msg?.type === "POPUP_SET_TRACK") {
+    domain_track_map[msg.domain] = msg.track;
+    await saveVault();
+    routeDomainMood(msg.domain, msg.track);
+  }
+  if (msg?.type === "POPUP_SET_MUTE") {
+    const domain = msg.domain;
+    if (msg.muted && !mute_list.includes(domain)) mute_list.push(domain);
+    if (!msg.muted) mute_list = mute_list.filter((d) => d !== domain);
+    await saveVault();
+    routeDomainMood(domain, active_track || "Lofi");
+  }
+  if (msg?.type === "POPUP_QUERY_STATE") {
+    const domain = msg.domain;
+    return Promise.resolve({
+      domain,
+      forcedTrack: domain_track_map[domain] || "",
+      muted: mute_list.includes(domain),
+      tracks: TRACKS
+    });
+  }
+});
