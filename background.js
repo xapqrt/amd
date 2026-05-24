@@ -11,12 +11,13 @@ let active_domain_string = "";
 let mute_list = [];
 let domain_track_map = {};
 let transition_lock = false;
+let master_volume = 0.22;
 
 function bootAudio() {
   if (!audio_ctx || audio_ctx.state === "closed") {
     audio_ctx = new AudioContext();
     master_gain = audio_ctx.createGain();
-    master_gain.gain.value = 0.22;
+    master_gain.gain.value = master_volume;
     master_gain.connect(audio_ctx.destination);
     console.log("AUDIO CONTEXT DIED REBOOTING");
   }
@@ -44,7 +45,7 @@ function softKillCurrentTrack(ms = 140) {
   master_gain.gain.linearRampToValueAtTime(0.0001, now + ms / 1000);
   setTimeout(() => {
     killCurrentTrack();
-    master_gain.gain.value = 0.22;
+    master_gain.gain.value = master_volume;
   }, ms + 20);
 }
 
@@ -95,15 +96,17 @@ function safeDomain(urlString) {
 }
 
 async function loadVault() {
-  const data = await chrome.storage.local.get(["domainTrackMap", "muteList"]);
+  const data = await chrome.storage.local.get(["domainTrackMap", "muteList", "masterVolume"]);
   domain_track_map = data.domainTrackMap || {};
   mute_list = data.muteList || [];
+  master_volume = typeof data.masterVolume === "number" ? data.masterVolume : 0.22;
 }
 
 async function saveVault() {
   await chrome.storage.local.set({
     domainTrackMap: domain_track_map,
-    muteList: mute_list
+    muteList: mute_list,
+    masterVolume: master_volume
   });
 }
 
@@ -392,7 +395,7 @@ function switchTrack(nextTrack) {
     if (master_gain && audio_ctx) {
       const now = audio_ctx.currentTime;
       master_gain.gain.setValueAtTime(0.0001, now);
-      master_gain.gain.linearRampToValueAtTime(0.22, now + 0.18);
+      master_gain.gain.linearRampToValueAtTime(master_volume, now + 0.18);
     }
     transition_lock = false;
   }, 130);
@@ -422,7 +425,13 @@ chrome.runtime.onMessage.addListener(async (msg) => {
       domain,
       forcedTrack: domain_track_map[domain] || "",
       muted: mute_list.includes(domain),
-      tracks: TRACKS
+      tracks: TRACKS,
+      volume: master_volume
     });
+  }
+  if (msg?.type === "POPUP_SET_VOLUME") {
+    master_volume = Math.max(0, Math.min(1, Number(msg.volume || 0.22)));
+    if (master_gain) master_gain.gain.value = master_volume;
+    await saveVault();
   }
 });
