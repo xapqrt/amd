@@ -12,6 +12,7 @@ let mute_list = [];
 let domain_track_map = {};
 let transition_lock = false;
 let master_volume = 0.22;
+let global_muted = false;
 
 function bootAudio() {
   if (!audio_ctx || audio_ctx.state === "closed") {
@@ -134,21 +135,27 @@ function safeDomain(urlString) {
 }
 
 async function loadVault() {
-  const data = await chrome.storage.local.get(["domainTrackMap", "muteList", "masterVolume"]);
+  const data = await chrome.storage.local.get(["domainTrackMap", "muteList", "masterVolume", "globalMuted"]);
   domain_track_map = data.domainTrackMap || {};
   mute_list = data.muteList || [];
   master_volume = typeof data.masterVolume === "number" ? data.masterVolume : 0.22;
+  global_muted = !!data.globalMuted;
 }
 
 async function saveVault() {
   await chrome.storage.local.set({
     domainTrackMap: domain_track_map,
     muteList: mute_list,
-    masterVolume: master_volume
+    masterVolume: master_volume,
+    globalMuted: global_muted
   });
 }
 
 function routeDomainMood(domain, detectedMood) {
+  if (global_muted) {
+    killCurrentTrack();
+    return;
+  }
   active_domain_string = domain || active_domain_string;
   if (!active_domain_string) return;
   if (mute_list.includes(active_domain_string)) {
@@ -482,7 +489,8 @@ chrome.runtime.onMessage.addListener(async (msg) => {
       forcedTrack: domain_track_map[domain] || "",
       muted: mute_list.includes(domain),
       tracks: TRACKS,
-      volume: master_volume
+      volume: master_volume,
+      globalMuted: global_muted
     });
   }
   if (msg?.type === "POPUP_SET_VOLUME") {
@@ -515,5 +523,11 @@ chrome.runtime.onMessage.addListener(async (msg) => {
     mute_list = mute_list.filter((d) => d !== domain);
     await saveVault();
     if (domain === active_domain_string) recheckActiveTabMood().catch(() => {});
+  }
+  if (msg?.type === "POPUP_SET_GLOBAL_MUTE") {
+    global_muted = !!msg.muted;
+    await saveVault();
+    if (global_muted) killCurrentTrack();
+    if (!global_muted) recheckActiveTabMood().catch(() => {});
   }
 });
