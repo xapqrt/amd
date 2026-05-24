@@ -22,6 +22,10 @@ body {
 
 .sub { color: #9ac9b0; }
 .row { display: flex; gap: 10px; margin: 12px 0; flex-wrap: wrap; }
+
+#domainInput { min-width: 220px; flex: 1; }
+#trackSelect { min-width: 170px; }
+
 input, select, button {
   background: #101a14;
   color: var(--fg);
@@ -32,3 +36,22 @@ button { cursor: pointer; }
 table { width: 100%; border-collapse: collapse; margin-top: 14px; }
 th, td { border: 1px solid var(--line); padding: 8px; text-align: left; }
 .status { margin-top: 12px; color: var(--accent); }
+
+@media (max-width: 680px) {
+  .panel {
+    margin: 0;
+    min-height: 100vh;
+    border: none;
+  }
+
+  .row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  #domainInput,
+  #trackSelect,
+  button {
+    width: 100%;
+  }
+}

@@ -1,21 +1,25 @@
 :root {
-  --bg: #0b1110;
-  --fg: #b7ffd6;
-  --line: #214236;
-  --accent: #33ff99;
+  --bg: #0a120f;
+  --fg: #cbffe4;
+  --line: #2a5a42;
+  --accent: #5dffb2;
 }
 
 body {
   margin: 0;
-  background: var(--bg);
+  background: radial-gradient(circle at 20% 0%, #10211a 0%, var(--bg) 55%);
   color: var(--fg);
   font: 13px "SF Mono", Menlo, monospace;
-  width: 280px;
+  width: 300px;
 }
 
-.wrap { padding: 12px; border: 1px solid var(--line); }
+.wrap {
+  padding: 14px;
+  border: 1px solid var(--line);
+  box-shadow: inset 0 0 0 1px rgba(87, 255, 177, 0.08);
+}
 .domain {
-  margin-bottom: 10px;
+  margin-bottom: 12px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -59,3 +63,5 @@ select {
 }
 
 .mute { display: block; margin-top: 10px; }
+
+label { user-select: none; }

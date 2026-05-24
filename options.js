@@ -36,6 +36,7 @@
     tbody.querySelectorAll("button[data-kill]").forEach((btn) => {
       btn.addEventListener("click", async () => {
         await chrome.runtime.sendMessage({ type: "OPTIONS_REMOVE_DOMAIN", domain: btn.dataset.kill });
+        $("status").textContent = `removed ${btn.dataset.kill}`;
         loadRows();
       });
     });
@@ -48,6 +49,9 @@
     const muted = $("muteToggle").checked;
     await chrome.runtime.sendMessage({ type: "OPTIONS_SAVE_DOMAIN", domain, track, muted });
     $("status").textContent = `saved ${domain}`;
+    $("domainInput").value = "";
+    $("trackSelect").value = "";
+    $("muteToggle").checked = false;
     loadRows();
   });
 

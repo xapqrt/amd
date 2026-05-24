@@ -9,7 +9,7 @@
 
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   const domain = cleanDomain(tab?.url || "");
-  document.getElementById("domain").textContent = domain;
+  document.getElementById("domain").textContent = domain || "unsupported tab";
 
   const state = await chrome.runtime.sendMessage({ type: "POPUP_QUERY_STATE", domain });
   const sel = document.getElementById("track");
@@ -29,12 +29,15 @@
   }
 
   sel.value = state.forcedTrack || "";
-  status.textContent = state.forcedTrack ? `manual track: ${state.forcedTrack}` : "auto mood mode";
+  status.textContent = state.globalMuted
+    ? "global mute ON"
+    : (state.forcedTrack ? `manual track: ${state.forcedTrack}` : `auto mood (${state.activeTrack || "idle"})`);
   vol.value = String(Math.round((state.volume ?? 0.22) * 100));
   document.getElementById("globalMute").checked = !!state.globalMuted;
   document.getElementById("mute").checked = state.muted;
 
   sel.addEventListener("change", () => {
+    if (!domain) return;
     if (!sel.value) {
       chrome.runtime.sendMessage({ type: "POPUP_CLEAR_TRACK", domain });
       status.textContent = "auto mood mode";
@@ -45,6 +48,7 @@
   });
 
   document.getElementById("mute").addEventListener("change", (e) => {
+    if (!domain) return;
     chrome.runtime.sendMessage({
       type: "POPUP_SET_MUTE",
       domain,
