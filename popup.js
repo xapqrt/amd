@@ -1,6 +1,14 @@
 (async () => {
+  function cleanDomain(rawUrl) {
+    try {
+      return new URL(rawUrl).hostname.replace(/^www\./, "").toLowerCase();
+    } catch {
+      return "";
+    }
+  }
+
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  const domain = new URL(tab.url).hostname.replace(/^www\./, "");
+  const domain = cleanDomain(tab?.url || "");
   document.getElementById("domain").textContent = domain;
 
   const state = await chrome.runtime.sendMessage({ type: "POPUP_QUERY_STATE", domain });

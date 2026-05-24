@@ -134,6 +134,13 @@ function safeDomain(urlString) {
   }
 }
 
+function normalizeDomainLoose(input) {
+  const raw = String(input || "").trim().toLowerCase();
+  if (!raw) return "";
+  if (raw.includes("/")) return safeDomain(raw.startsWith("http") ? raw : `https://${raw}`);
+  return raw.replace(/^www\./, "");
+}
+
 async function loadVault() {
   const data = await chrome.storage.local.get(["domainTrackMap", "muteList", "masterVolume", "globalMuted"]);
   domain_track_map = data.domainTrackMap || {};
@@ -479,24 +486,29 @@ function switchTrack(nextTrack) {
 
 chrome.runtime.onMessage.addListener(async (msg) => {
   if (msg?.type === "POPUP_SET_TRACK") {
-    domain_track_map[msg.domain] = msg.track;
+    const domain = normalizeDomainLoose(msg.domain);
+    if (!domain) return;
+    domain_track_map[domain] = msg.track;
     await saveVault();
-    routeDomainMood(msg.domain, msg.track);
+    routeDomainMood(domain, msg.track);
   }
   if (msg?.type === "POPUP_CLEAR_TRACK") {
-    delete domain_track_map[msg.domain];
+    const domain = normalizeDomainLoose(msg.domain);
+    if (!domain) return;
+    delete domain_track_map[domain];
     await saveVault();
     recheckActiveTabMood().catch(() => {});
   }
   if (msg?.type === "POPUP_SET_MUTE") {
-    const domain = msg.domain;
+    const domain = normalizeDomainLoose(msg.domain);
+    if (!domain) return;
     if (msg.muted && !mute_list.includes(domain)) mute_list.push(domain);
     if (!msg.muted) mute_list = mute_list.filter((d) => d !== domain);
     await saveVault();
     routeDomainMood(domain, active_track || "Lofi");
   }
   if (msg?.type === "POPUP_QUERY_STATE") {
-    const domain = msg.domain;
+    const domain = normalizeDomainLoose(msg.domain);
     return Promise.resolve({
       domain,
       forcedTrack: domain_track_map[domain] || "",
@@ -521,7 +533,7 @@ chrome.runtime.onMessage.addListener(async (msg) => {
     return Promise.resolve({ rows });
   }
   if (msg?.type === "OPTIONS_SAVE_DOMAIN") {
-    const domain = (msg.domain || "").toLowerCase();
+    const domain = normalizeDomainLoose(msg.domain);
     if (!domain) return;
     if (msg.track) domain_track_map[domain] = msg.track;
     if (!msg.track) delete domain_track_map[domain];
@@ -531,7 +543,7 @@ chrome.runtime.onMessage.addListener(async (msg) => {
     if (domain === active_domain_string) routeDomainMood(domain, active_track || "Lofi");
   }
   if (msg?.type === "OPTIONS_REMOVE_DOMAIN") {
-    const domain = (msg.domain || "").toLowerCase();
+    const domain = normalizeDomainLoose(msg.domain);
     delete domain_track_map[domain];
     mute_list = mute_list.filter((d) => d !== domain);
     await saveVault();

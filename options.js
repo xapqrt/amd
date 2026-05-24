@@ -2,6 +2,19 @@
   const $ = (id) => document.getElementById(id);
   const tracks = ["", "Thriller", "Library", "Arcade", "Zen", "Cyberpunk", "Nature", "Space", "Radio", "Doom", "Lofi"];
 
+  function cleanDomain(input) {
+    const raw = String(input || "").trim().toLowerCase();
+    if (!raw) return "";
+    if (raw.includes("/")) {
+      try {
+        return new URL(raw.startsWith("http") ? raw : `https://${raw}`).hostname.replace(/^www\./, "");
+      } catch {
+        return "";
+      }
+    }
+    return raw.replace(/^www\./, "");
+  }
+
   for (const t of tracks) {
     const o = document.createElement("option");
     o.value = t;
@@ -29,7 +42,7 @@
   }
 
   $("saveBtn").addEventListener("click", async () => {
-    const domain = $("domainInput").value.trim().toLowerCase();
+    const domain = cleanDomain($("domainInput").value);
     if (!domain) return;
     const track = $("trackSelect").value;
     const muted = $("muteToggle").checked;
