@@ -247,3 +247,45 @@ function startNatureTrack() {
   active_nodes.push(src, bp, g, bird.o, bird.g);
   active_track = "Nature";
 }
+
+function startSpaceTrack() {
+  const deep = mkOsc("sine", 55, 0.02);
+  const mid = mkOsc("triangle", 110, 0.015);
+  const shimmer = mkOsc("sine", 440, 0.007);
+  let t = 0;
+  const timer = setInterval(() => {
+    t += 0.08;
+    deep.o.frequency.value = 50 + Math.sin(t) * 6;
+    mid.o.frequency.value = 100 + Math.sin(t * 0.7) * 10;
+    shimmer.o.detune.value = Math.sin(t * 1.7) * 22;
+  }, 120);
+  active_nodes.push({ stop: () => clearInterval(timer), disconnect: () => {} });
+  active_track = "Space";
+}
+
+
+
+
+
+
+
+
+
+function startRadioTrack() {
+  const carrier = mkOsc("sine", 300, 0.012);
+  const hiss_buffer = audio_ctx.createBuffer(1, audio_ctx.sampleRate, audio_ctx.sampleRate);
+  const ch = hiss_buffer.getChannelData(0);
+  for (let i = 0; i < ch.length; i++) ch[i] = (Math.random() * 2 - 1) * 0.1;
+  const hiss = audio_ctx.createBufferSource();
+  hiss.buffer = hiss_buffer;
+  hiss.loop = true;
+  const hp = audio_ctx.createBiquadFilter();
+  hp.type = "highpass";
+  hp.frequency.value = 1800;
+  const g = audio_ctx.createGain();
+  g.gain.value = 0.016;
+  hiss.connect(hp).connect(g).connect(master_gain);
+  hiss.start();
+  active_nodes.push(carrier.o, carrier.g, hiss, hp, g);
+  active_track = "Radio";
+}
