@@ -1,0 +1,35 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Web-Scapes Settings</title>
+  <link rel="stylesheet" href="options.css" />
+</head>
+<body>
+  <main class="panel">
+    <h1>Web-Scapes Domain Settings</h1>
+    <p class="sub">Per-domain track overrides and mute controls.</p>
+
+    <div class="row">
+      <input id="domainInput" placeholder="example.com" />
+      <select id="trackSelect"></select>
+      <label><input id="muteToggle" type="checkbox" /> mute</label>
+      <button id="saveBtn">save</button>
+    </div>
+
+    <div class="row">
+      <button id="reloadBtn">reload list</button>
+    </div>
+
+    <table>
+      <thead>
+        <tr><th>domain</th><th>track</th><th>muted</th><th>remove</th></tr>
+      </thead>
+      <tbody id="domainTable"></tbody>
+    </table>
+
+    <p id="status" class="status">idle</p>
+  </main>
+  <script src="options.js"></script>
+</body>
+</html>
