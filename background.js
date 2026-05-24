@@ -62,6 +62,21 @@ const MOOD_KEYWORDS = {
   Lofi: ["chill", "lofi", "focus", "beats", "vibes", "late night"]
 };
 
+const DOMAIN_MOOD_HINTS = {
+  "wikipedia.org": "Library",
+  "github.com": "Cyberpunk",
+  "gitlab.com": "Cyberpunk",
+  "x.com": "Arcade",
+  "twitter.com": "Arcade",
+  "instagram.com": "Arcade",
+  "tiktok.com": "Arcade",
+  "bbc.com": "Thriller",
+  "cnn.com": "Thriller",
+  "nytimes.com": "Thriller",
+  "nature.com": "Nature",
+  "nasa.gov": "Space"
+};
+
 function pickMoodFromKeywords(rawText) {
   const text = (rawText || "").toLowerCase();
   let winner = "Lofi";
@@ -77,12 +92,32 @@ function pickMoodFromKeywords(rawText) {
   return winner;
 }
 
+function pickMoodFromDomain(domain) {
+  if (!domain) return "";
+  const hit = Object.entries(DOMAIN_MOOD_HINTS)
+    .find(([needle]) => domain.endsWith(needle));
+  return hit ? hit[1] : "";
+}
+
+function chooseMood(domain, rawText) {
+  const contentMood = pickMoodFromKeywords(rawText);
+  const domainMood = pickMoodFromDomain(domain);
+  if (!domainMood) return contentMood;
+  if (domainMood === contentMood) return contentMood;
+
+  const txt = (rawText || "").toLowerCase();
+  const words = MOOD_KEYWORDS[contentMood] || [];
+  let confidence = 0;
+  for (const w of words) if (txt.includes(w)) confidence += 1;
+  return confidence >= 3 ? contentMood : domainMood;
+}
+
 chrome.runtime.onMessage.addListener((msg, sender) => {
   if (msg?.type === "MOOD_DETECTED") {
     const url = sender?.tab?.url || "";
     const domain = safeDomain(url);
-    const mood = msg.mood && TRACKS.includes(msg.mood)
-      ? msg.mood : pickMoodFromKeywords(msg.rawText);
+    const hintMood = msg.mood && TRACKS.includes(msg.mood) ? msg.mood : "";
+    const mood = chooseMood(domain, `${msg.rawText || ""} ${hintMood}`);
     routeDomainMood(domain, mood);
   }
 });
@@ -135,7 +170,7 @@ async function recheckActiveTabMood() {
   if (!tab?.url) return;
   const domain = safeDomain(tab.url);
   const guessText = `${tab.title || ""} ${domain}`;
-  const guessedMood = pickMoodFromKeywords(guessText);
+  const guessedMood = chooseMood(domain, guessText);
   routeDomainMood(domain, guessedMood);
 }
 
