@@ -40,11 +40,24 @@
   }
 
   function pushMood() {
-    const raw = buildRawText();
+    let raw = buildRawText();
+    const signals = {
+      headingCount: document.querySelectorAll("h1,h2,h3").length,
+      linkCount: document.querySelectorAll("a").length,
+      articleCount: document.querySelectorAll("article").length,
+      hasCode: !!document.querySelector("pre,code"),
+      hasVideo: !!document.querySelector("video,iframe[src*='youtube'],iframe[src*='vimeo']")
+    };
+
+    if (signals.hasCode) {
+      raw += " code-snippets terminal stacktrace commit";
+    }
+
     chrome.runtime.sendMessage({
       type: "MOOD_DETECTED",
       mood: detectMood(raw),
-      rawText: raw
+      rawText: raw,
+      signals
     });
   }
 
