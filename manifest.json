@@ -20,6 +20,7 @@
     "default_title": "Web-Scapes",
     "default_popup": "popup.html"
   },
+  "options_page": "options.html",
   "commands": {
     "toggle-domain-mute": {
       "suggested_key": {
