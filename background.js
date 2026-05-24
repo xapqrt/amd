@@ -202,3 +202,48 @@ function startZenTrack() {
   active_nodes.push({ stop: () => clearInterval(timer), disconnect: () => {} });
   active_track = "Zen";
 }
+
+function startCyberpunkTrack() {
+  console.log("matched cyberpunk mood... injecting synth");
+  const lead1 = mkOsc("sawtooth", 98, 0.02, -11);
+  const lead2 = mkOsc("sawtooth", 98, 0.02, 11);
+  const sub = mkOsc("square", 49, 0.015, 0);
+  const hp = audio_ctx.createBiquadFilter();
+  hp.type = "highpass";
+  hp.frequency.value = 140;
+  lead1.g.disconnect();
+  lead2.g.disconnect();
+  lead1.g.connect(hp);
+  lead2.g.connect(hp);
+  hp.connect(master_gain);
+  active_nodes.push(hp, sub.o, sub.g);
+  active_track = "Cyberpunk";
+}
+
+
+
+
+
+
+
+
+
+function startNatureTrack() {
+  // TODO: make the 'nature' track sound less like tv static
+  const noise_buffer = audio_ctx.createBuffer(1, audio_ctx.sampleRate * 2, audio_ctx.sampleRate);
+  const out = noise_buffer.getChannelData(0);
+  for (let i = 0; i < out.length; i++) out[i] = (Math.random() * 2 - 1) * 0.2;
+  const src = audio_ctx.createBufferSource();
+  src.buffer = noise_buffer;
+  src.loop = true;
+  const bp = audio_ctx.createBiquadFilter();
+  bp.type = "bandpass";
+  bp.frequency.value = 980;
+  const g = audio_ctx.createGain();
+  g.gain.value = 0.018;
+  src.connect(bp).connect(g).connect(master_gain);
+  src.start();
+  const bird = mkOsc("sine", 1320, 0.004);
+  active_nodes.push(src, bp, g, bird.o, bird.g);
+  active_track = "Nature";
+}
