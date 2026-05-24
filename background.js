@@ -162,3 +162,43 @@ function startLibraryTrack() {
   active_nodes.push(src, lp, g);
   active_track = "Library";
 }
+
+function startArcadeTrack() {
+  const arpA = mkOsc("square", 220, 0.02);
+  const arpB = mkOsc("square", 330, 0.016, 7);
+  let step = 0;
+  const timer = setInterval(() => {
+    if (!audio_ctx) return;
+    const seq = [220, 262, 330, 392, 523, 392, 330, 262];
+    const n = seq[step % seq.length];
+    arpA.o.frequency.setTargetAtTime(n, audio_ctx.currentTime, 0.02);
+    arpB.o.frequency.setTargetAtTime(n * 1.5, audio_ctx.currentTime, 0.02);
+    step++;
+  }, 260);
+  active_nodes.push({ stop: () => clearInterval(timer), disconnect: () => {} });
+  active_track = "Arcade";
+}
+
+
+
+
+
+
+
+
+
+function startZenTrack() {
+  const synth_thing = mkOsc("sine", 174, 0.026);
+  const over = mkOsc("sine", 261.63, 0.018);
+  const air = mkOsc("triangle", 348.84, 0.011);
+  let drift = 0;
+  const timer = setInterval(() => {
+    drift += 0.35;
+    const wobble = Math.sin(drift) * 8;
+    synth_thing.o.detune.value = wobble;
+    over.o.detune.value = -wobble * 0.6;
+    air.o.detune.value = wobble * 0.3;
+  }, 180);
+  active_nodes.push({ stop: () => clearInterval(timer), disconnect: () => {} });
+  active_track = "Zen";
+}
