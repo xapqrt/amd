@@ -19,5 +19,14 @@
   "action": {
     "default_title": "Web-Scapes",
     "default_popup": "popup.html"
+  },
+  "commands": {
+    "toggle-domain-mute": {
+      "suggested_key": {
+        "default": "Alt+Shift+M",
+        "mac": "Alt+Shift+M"
+      },
+      "description": "Toggle mute for current domain"
+    }
   }
 }

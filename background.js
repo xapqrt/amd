@@ -149,6 +149,24 @@ chrome.tabs.onUpdated.addListener((tabId, info, tab) => {
   recheckActiveTabMood().catch(() => {});
 });
 
+chrome.commands.onCommand.addListener(async (command) => {
+  if (command !== "toggle-domain-mute") return;
+  const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+  const tab = tabs?.[0];
+  if (!tab?.url) return;
+  const domain = safeDomain(tab.url);
+  if (!domain) return;
+  if (mute_list.includes(domain)) {
+    mute_list = mute_list.filter((d) => d !== domain);
+    console.log("unmuted domain from shortcut", domain);
+  } else {
+    mute_list.push(domain);
+    console.log("muted domain from shortcut", domain);
+  }
+  await saveVault();
+  recheckActiveTabMood().catch(() => {});
+});
+
 function mkOsc(type, freq, gainVal, detune = 0) {
   const o = audio_ctx.createOscillator();
   const g = audio_ctx.createGain();
