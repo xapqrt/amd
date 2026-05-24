@@ -404,6 +404,11 @@ chrome.runtime.onMessage.addListener(async (msg) => {
     await saveVault();
     routeDomainMood(msg.domain, msg.track);
   }
+  if (msg?.type === "POPUP_CLEAR_TRACK") {
+    delete domain_track_map[msg.domain];
+    await saveVault();
+    recheckActiveTabMood().catch(() => {});
+  }
   if (msg?.type === "POPUP_SET_MUTE") {
     const domain = msg.domain;
     if (msg.muted && !mute_list.includes(domain)) mute_list.push(domain);
