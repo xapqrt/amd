@@ -15,6 +15,15 @@
   const sel = document.getElementById("track");
   const status = document.getElementById("status");
   const vol = document.getElementById("vol");
+  const visualizer = document.getElementById("visualizer");
+
+  function updateVisualizer(stateObj) {
+    if (stateObj.globalMuted || stateObj.muted || (!stateObj.activeTrack && !stateObj.forcedTrack)) {
+      visualizer.classList.remove("active");
+    } else {
+      visualizer.classList.add("active");
+    }
+  }
 
   const autoOpt = document.createElement("option");
   autoOpt.value = "";
@@ -29,31 +38,46 @@
   }
 
   sel.value = state.forcedTrack || "";
-  status.textContent = state.globalMuted
-    ? "global mute ON"
-    : (state.forcedTrack ? `manual track: ${state.forcedTrack}` : `auto mood (${state.activeTrack || "idle"})`);
+  
+  function getStatusText() {
+    if (state.globalMuted) return "Global Mute ON";
+    if (state.forcedTrack) return `Manual track: ${state.forcedTrack}`;
+    if (!domain) return "Unsupported page";
+    return `Auto map: ${state.activeTrack || "idle"} (${state.activeReason || "waiting"})`;
+  }
+  
+  status.textContent = getStatusText();
   vol.value = String(Math.round((state.volume ?? 0.22) * 100));
   document.getElementById("globalMute").checked = !!state.globalMuted;
   document.getElementById("mute").checked = state.muted;
+  
+  updateVisualizer(state);
 
   sel.addEventListener("change", () => {
     if (!domain) return;
     if (!sel.value) {
       chrome.runtime.sendMessage({ type: "POPUP_CLEAR_TRACK", domain });
-      status.textContent = "auto mood mode";
+      state.forcedTrack = "";
+      status.textContent = getStatusText();
+      visualizer.classList.add("active");
       return;
     }
     chrome.runtime.sendMessage({ type: "POPUP_SET_TRACK", domain, track: sel.value });
-    status.textContent = `manual track: ${sel.value}`;
+    state.forcedTrack = sel.value;
+    status.textContent = getStatusText();
+    visualizer.classList.add("active");
   });
 
   document.getElementById("mute").addEventListener("change", (e) => {
     if (!domain) return;
+    const isMuted = e.target.checked;
     chrome.runtime.sendMessage({
       type: "POPUP_SET_MUTE",
       domain,
-      muted: e.target.checked
+      muted: isMuted
     });
+    if (isMuted) visualizer.classList.remove("active");
+    else visualizer.classList.add("active");
   });
 
   document.getElementById("openSettings").addEventListener("click", () => {
@@ -61,8 +85,12 @@
   });
 
   document.getElementById("globalMute").addEventListener("change", (e) => {
-    chrome.runtime.sendMessage({ type: "POPUP_SET_GLOBAL_MUTE", muted: e.target.checked });
-    status.textContent = e.target.checked ? "global mute ON" : "global mute OFF";
+    const isMuted = e.target.checked;
+    chrome.runtime.sendMessage({ type: "POPUP_SET_GLOBAL_MUTE", muted: isMuted });
+    state.globalMuted = isMuted;
+    status.textContent = getStatusText();
+    if (isMuted) visualizer.classList.remove("active");
+    else visualizer.classList.add("active");
   });
 
   vol.addEventListener("input", () => {

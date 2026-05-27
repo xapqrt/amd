@@ -7,34 +7,40 @@ const OFFSCREEN_AUDIO_TARGET = "OFFSCREEN_AUDIO";
 const OFFSCREEN_PAGE = "offscreen.html";
 
 const MOOD_KEYWORDS = {
-  Thriller: ["war", "crisis", "breaking", "attack", "threat", "panic"],
-  Library: ["study", "history", "wiki", "archive", "literature"],
-  Arcade: ["game", "arcade", "score", "combo", "pixel", "retro"],
-  Zen: ["meditation", "calm", "mindful", "yoga", "breath"],
-  Cyberpunk: ["github", "code", "tech", "terminal", "hacker", "ai"],
-  Nature: ["forest", "river", "wildlife", "mountain", "eco"],
-  Space: ["space", "galaxy", "orbit", "nasa", "cosmos", "planet"],
-  Radio: ["podcast", "broadcast", "newsroom", "station", "fm"],
-  Doom: ["horror", "doom", "dark", "demon", "apocalypse"],
-  Lofi: ["chill", "lofi", "focus", "beats", "vibes", "late night"]
+  Thriller: ["war", "crisis", "breaking", "threat", "attack", "panic", "emergency", "tension", "scandal"],
+  Library: ["study", "history", "wiki", "archive", "literature", "reference", "research", "journal", "documentary", "academic"],
+  Arcade: ["arcade", "retro", "score", "combo", "pixel", "platformer", "multiplayer", "play", "gaming", "esports"],
+  Zen: ["mindful", "calm", "meditation", "breath", "yoga", "stillness", "peace", "relax", "healing", "wellness"],
+  Cyberpunk: ["github", "code", "tech", "terminal", "hacker", "binary", "blockchain", "cyber", "ai", "machine learning"],
+  Nature: ["forest", "river", "wildlife", "earth", "mountain", "garden", "climate", "environment", "eco", "camping"],
+  Space: ["space", "orbit", "planet", "cosmos", "nasa", "galaxy", "astronomy", "universe", "alien", "telescope"],
+  Radio: ["podcast", "broadcast", "station", "fm", "live", "host", "news", "talk", "interview", "discussion"],
+  Doom: ["horror", "doom", "apocalypse", "demon", "nightmare", "dark", "blood", "evil", "survival", "zombie"],
+  Lofi: ["lofi", "chill", "focus", "beats", "vibes", "night", "aesthetic", "cozy", "cafe", "studying"]
 };
 
 const DOMAIN_MOOD_HINTS = {
   "wikipedia.org": "Library",
   "github.com": "Cyberpunk",
   "gitlab.com": "Cyberpunk",
-  "x.com": "Arcade",
-  "twitter.com": "Arcade",
-  "instagram.com": "Arcade",
+  "stackoverflow.com": "Cyberpunk",
+  "x.com": "Radio",
+  "twitter.com": "Radio",
+  "reddit.com": "Radio",
+  "instagram.com": "Lofi",
   "tiktok.com": "Arcade",
+  "twitch.tv": "Arcade",
   "bbc.com": "Thriller",
   "cnn.com": "Thriller",
   "nytimes.com": "Thriller",
   "nature.com": "Nature",
-  "nasa.gov": "Space"
+  "nasa.gov": "Space",
+  "youtube.com": "Radio",
+  "medium.com": "Library"
 };
 
 let active_track = "";
+let active_track_reason = "Default mood";
 let active_domain_string = "";
 let mute_list = [];
 let domain_track_map = {};
@@ -83,17 +89,17 @@ function chooseMood(domain, rawText, signals = {}) {
   const contentMood = pickMoodFromKeywords(rawText);
   const domainMood = pickMoodFromDomain(domain);
 
-  if (signals.hasCode && domainMood !== "Thriller") return "Cyberpunk";
-  if ((signals.articleCount || 0) > 2 && (signals.linkCount || 0) > 80) return "Library";
-  if (signals.hasVideo && (signals.linkCount || 0) > 100) return "Arcade";
-  if (!domainMood) return contentMood;
-  if (domainMood === contentMood) return contentMood;
+  if (signals.hasCode && domainMood !== "Thriller") return { mood: "Cyberpunk", reason: "Found code snippets" };
+  if ((signals.articleCount || 0) > 2 && (signals.linkCount || 0) > 80) return { mood: "Library", reason: "Wiki-like structure" };
+  if (signals.hasVideo && (signals.linkCount || 0) > 100) return { mood: "Arcade", reason: "Videos + heavy UI" };
+  if (!domainMood) return { mood: contentMood, reason: "Based on page contents" };
+  if (domainMood === contentMood) return { mood: contentMood, reason: "Matches domain hint" };
 
   const txt = (rawText || "").toLowerCase();
   const words = MOOD_KEYWORDS[contentMood] || [];
   let confidence = 0;
   for (const w of words) if (txt.includes(w)) confidence += 1;
-  return confidence >= 3 ? contentMood : domainMood;
+  return confidence >= 3 ? { mood: contentMood, reason: "Strong text keyword match" } : { mood: domainMood, reason: "Based on domain hint" };
 }
 
 async function loadVault() {
@@ -147,9 +153,10 @@ async function switchTrack(nextTrack) {
   await sendAudio({ type: "AUDIO_SWITCH_TRACK", track: nextTrack, volume: master_volume });
 }
 
-async function routeDomainMood(domain, detectedMood) {
+async function routeDomainMood(domain, detectedMood, reason = "auto detected") {
   if (global_muted) {
     active_track = "";
+    active_track_reason = "Muted globally";
     await sendAudio({ type: "AUDIO_STOP" });
     return;
   }
@@ -159,23 +166,31 @@ async function routeDomainMood(domain, detectedMood) {
 
   if (mute_list.includes(active_domain_string)) {
     active_track = "";
+    active_track_reason = "Domain muted";
     await sendAudio({ type: "AUDIO_STOP" });
     return;
   }
 
   const forced = domain_track_map[active_domain_string];
   const finalMood = forced && TRACKS.includes(forced) ? forced : detectedMood;
+  active_track_reason = forced && TRACKS.includes(forced) ? "Manual override" : reason;
   await switchTrack(finalMood);
 }
 
 async function recheckActiveTabMood() {
   const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
   const tab = tabs?.[0];
-  if (!tab?.url) return;
+  
+  if (!tab?.url || tab.url.startsWith("chrome://") || tab.url.startsWith("edge://") || tab.url.startsWith("brave://") || tab.url.startsWith("about:")) {
+    active_track = "";
+    await sendAudio({ type: "AUDIO_STOP" });
+    return;
+  }
+
   const domain = safeDomain(tab.url);
   const guessText = `${tab.title || ""} ${domain}`;
-  const guessedMood = chooseMood(domain, guessText);
-  await routeDomainMood(domain, guessedMood);
+  const { mood: guessedMood, reason } = chooseMood(domain, guessText);
+  await routeDomainMood(domain, guessedMood, reason);
 }
 
 async function initEngine() {
@@ -223,8 +238,8 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     const url = sender?.tab?.url || "";
     const domain = safeDomain(url);
     const hintMood = msg.mood && TRACKS.includes(msg.mood) ? msg.mood : "";
-    const mood = chooseMood(domain, `${msg.rawText || ""} ${hintMood}`, msg.signals || {});
-    routeDomainMood(domain, mood).catch(() => {});
+    const { mood, reason } = chooseMood(domain, `${msg.rawText || ""} ${hintMood}`, msg.signals || {});
+    routeDomainMood(domain, mood, reason).catch(() => {});
     return false;
   }
 
@@ -237,7 +252,8 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       tracks: TRACKS,
       volume: master_volume,
       globalMuted: global_muted,
-      activeTrack: active_track
+      activeTrack: active_track,
+      activeReason: active_track_reason
     });
     return false;
   }

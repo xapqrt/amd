@@ -55,3 +55,33 @@ th, td { border: 1px solid var(--line); padding: 8px; text-align: left; }
     width: 100%;
   }
 }
+
+table {
+  background: rgba(0,0,0, 0.4);
+  border-radius: 6px;
+  overflow: hidden;
+}
+th {
+  background: #172c21;
+  color: var(--accent);
+}
+td button {
+  background: transparent;
+  color: #ff6b6b;
+  border: 1px solid #ff6b6b;
+  border-radius: 4px;
+}
+td button:hover {
+  background: rgba(255, 107, 107, 0.1);
+}
+button {
+  background: #1a3326;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+button:hover {
+  background: #254a37;
+}
+input, select {
+  border-radius: 4px;
+}

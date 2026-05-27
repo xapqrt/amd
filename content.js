@@ -1,15 +1,15 @@
 (() => {
   const clusters = {
-    Thriller: ["war", "crisis", "breaking", "threat", "attack", "panic"],
-    Library: ["study", "history", "wiki", "archive", "literature", "reference"],
-    Arcade: ["arcade", "retro", "score", "combo", "pixel", "platformer"],
-    Zen: ["mindful", "calm", "meditation", "breath", "yoga", "stillness"],
-    Cyberpunk: ["github", "code", "tech", "terminal", "hacker", "binary"],
-    Nature: ["forest", "river", "wildlife", "earth", "mountain", "garden"],
-    Space: ["space", "orbit", "planet", "cosmos", "nasa", "galaxy"],
-    Radio: ["podcast", "broadcast", "station", "fm", "live", "host"],
-    Doom: ["horror", "doom", "apocalypse", "demon", "nightmare", "dark"],
-    Lofi: ["lofi", "chill", "focus", "beats", "vibes", "night"]
+    Thriller: ["war", "crisis", "breaking", "threat", "attack", "panic", "emergency", "tension", "scandal"],
+    Library: ["study", "history", "wiki", "archive", "literature", "reference", "research", "journal", "documentary", "academic"],
+    Arcade: ["arcade", "retro", "score", "combo", "pixel", "platformer", "multiplayer", "play", "gaming", "esports"],
+    Zen: ["mindful", "calm", "meditation", "breath", "yoga", "stillness", "peace", "relax", "healing", "wellness"],
+    Cyberpunk: ["github", "code", "tech", "terminal", "hacker", "binary", "blockchain", "cyber", "ai", "machine learning"],
+    Nature: ["forest", "river", "wildlife", "earth", "mountain", "garden", "climate", "environment", "eco", "camping"],
+    Space: ["space", "orbit", "planet", "cosmos", "nasa", "galaxy", "astronomy", "universe", "alien", "telescope"],
+    Radio: ["podcast", "broadcast", "station", "fm", "live", "host", "news", "talk", "interview", "discussion"],
+    Doom: ["horror", "doom", "apocalypse", "demon", "nightmare", "dark", "blood", "evil", "survival", "zombie"],
+    Lofi: ["lofi", "chill", "focus", "beats", "vibes", "night", "aesthetic", "cozy", "cafe", "studying"]
   };
 
   function detectMood(text) {

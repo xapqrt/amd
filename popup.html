@@ -8,13 +8,27 @@
 <body>
   <div class="wrap">
     <div id="domain" class="domain">loading domain...</div>
-    <select id="track"></select>
-    <label class="volLabel" for="vol">Master Volume</label>
-    <input id="vol" type="range" min="0" max="100" value="22" />
+    
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+      <select id="track" style="flex: 1; margin-right: 10px;"></select>
+      <div id="visualizer" class="visualizer">
+        <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
+      </div>
+    </div>
+    
     <div id="status" class="status">listening...</div>
+    
+    <div class="controls-group">
+      <div>
+        <label class="volLabel" for="vol" style="margin-top:0;">Master Volume</label>
+        <input id="vol" type="range" min="0" max="100" value="22" />
+      </div>
+      
+      <label class="checkbox-label"><input id="globalMute" type="checkbox" /> Global Mute</label>
+      <label class="checkbox-label"><input id="mute" type="checkbox" /> Mute This Domain</label>
+    </div>
+    
     <button id="openSettings" class="settingsBtn">Open Full Settings</button>
-    <label class="mute"><input id="globalMute" type="checkbox" /> Global Mute</label>
-    <label class="mute"><input id="mute" type="checkbox" /> Mute This Domain</label>
   </div>
   <script src="popup.js"></script>
 </body>

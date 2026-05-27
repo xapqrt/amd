@@ -6,6 +6,7 @@ let active_nodes = [];
 let active_track = "";
 let current_volume = 0.22;
 let transition_lock = false;
+let pending_track = null;
 
 function bootAudio() {
   if (!audio_ctx || audio_ctx.state === "closed") {
@@ -26,7 +27,7 @@ function killCurrentTrack() {
   active_track = "";
 }
 
-function softKillCurrentTrack(ms = 140) {
+function softKillCurrentTrack(ms = 1500) {
   if (!audio_ctx || !master_gain) {
     killCurrentTrack();
     return;
@@ -39,7 +40,7 @@ function softKillCurrentTrack(ms = 140) {
   setTimeout(() => {
     killCurrentTrack();
     master_gain.gain.value = current_volume;
-  }, ms + 20);
+  }, ms + 50);
 }
 
 function setVolume(v) {
@@ -277,26 +278,34 @@ const STARTERS = {
 
 function switchTrack(nextTrack) {
   if (!STARTERS[nextTrack]) return;
-  if (transition_lock) return;
+  if (active_track === nextTrack) return;
+
+  if (transition_lock) {
+    pending_track = nextTrack;
+    return;
+  }
+  
   transition_lock = true;
   bootAudio();
 
-  if (active_track === nextTrack) {
-    transition_lock = false;
-    return;
-  }
-
-  softKillCurrentTrack(120);
+  softKillCurrentTrack(1500);
 
   setTimeout(() => {
     STARTERS[nextTrack]();
     if (master_gain && audio_ctx) {
       const now = audio_ctx.currentTime;
+      master_gain.gain.cancelScheduledValues(now);
       master_gain.gain.setValueAtTime(0.0001, now);
-      master_gain.gain.linearRampToValueAtTime(current_volume, now + 0.18);
+      master_gain.gain.linearRampToValueAtTime(current_volume, now + 1.5);
     }
     transition_lock = false;
-  }, 130);
+    
+    if (pending_track) {
+      const p = pending_track;
+      pending_track = null;
+      if (p !== active_track) switchTrack(p);
+    }
+  }, 1600);
 }
 
 chrome.runtime.onMessage.addListener((msg) => {
@@ -312,7 +321,7 @@ chrome.runtime.onMessage.addListener((msg) => {
   }
 
   if (msg.type === "AUDIO_STOP") {
-    softKillCurrentTrack(80);
+    softKillCurrentTrack(1000);
   }
 
   if (msg.type === "AUDIO_SWITCH_TRACK") {
